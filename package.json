@@ -1,19 +1,19 @@
 {
-  "name": "n8n-nodes-<...>",
+  "name": "n8n-nodes-eventstore",
   "version": "0.1.0",
-  "description": "",
+  "description": "Interact with EventStoreDB",
   "keywords": [
     "n8n-community-node-package"
   ],
   "license": "MIT",
-  "homepage": "",
+  "homepage": "https://github.com/lotsik/n8n-nodes-eventstore",
   "author": {
-    "name": "",
-    "email": ""
+    "name": "lotsik",
+    "email": "lotsik@mail.ru"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/<...>/n8n-nodes-<...>.git"
+    "url": "https://github.com/lotsik/n8n-nodes-eventstore.git"
   },
   "main": "index.js",
   "scripts": {
@@ -30,12 +30,10 @@
   "n8n": {
     "n8nNodesApiVersion": 1,
     "credentials": [
-      "dist/credentials/ExampleCredentialsApi.credentials.js",
-      "dist/credentials/HttpBinApi.credentials.js"
+      "dist/credentials/EventStoreApi.credentials.js"
     ],
     "nodes": [
-      "dist/nodes/ExampleNode/ExampleNode.node.js",
-      "dist/nodes/HttpBin/HttpBin.node.js"
+      "dist/nodes/EventStore/EventStore.node.js"
     ]
   },
   "devDependencies": {
@@ -48,5 +46,9 @@
     "n8n-workflow": "*",
     "prettier": "^2.7.1",
     "typescript": "~4.8.4"
+  },
+  "dependencies": {
+    "@eventstore/db-client": "^6.1.0",
+    "uuid": "^9.0.1"
   }
 }
