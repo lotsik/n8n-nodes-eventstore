@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventStoreNode = void 0;
+exports.EventStore = void 0;
 const db_client_1 = require("@eventstore/db-client");
 const uuid_1 = require("uuid");
-class EventStoreNode {
+class EventStore {
     constructor() {
         this.description = {
             displayName: 'EventStore Node',
@@ -236,5 +236,5 @@ class EventStoreNode {
         return this.prepareOutputData(returnData);
     }
 }
-exports.EventStoreNode = EventStoreNode;
+exports.EventStore = EventStore;
 //# sourceMappingURL=EventStore.node.js.map
