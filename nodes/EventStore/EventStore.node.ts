@@ -3,10 +3,8 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
-	NodeOperationError,
 } from 'n8n-workflow';
-import { EventStoreDBClient, jsonEvent, START, FORWARDS, JSONEventType } from '@eventstore/db-client';
-import { v4 as uuid } from 'uuid';
+import { EventStoreDBClient, SingleNodeOptions, jsonEvent, START, FORWARDS, JSONEventType } from '@eventstore/db-client';
 
 export class EventStoreNode implements INodeType {
 	description: INodeTypeDescription = {
@@ -165,26 +163,38 @@ export class EventStoreNode implements INodeType {
 	};
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
-		const items = this.getInputData();
+
+		interface ConnectionSettings {
+			endpoint: string;
+			username: string;
+			password: string;
+		}
+
+		function createConnectionOptions(settings: ConnectionSettings): SingleNodeOptions {
+			return {
+				endpoint: {
+					address: settings.endpoint,
+					port: 1113 // используем порт по умолчанию
+				},
+				credentials: {
+					username: settings.username,
+					password: settings.password
+				}
+			};
+		}
+
 		const returnData: INodeExecutionData[] = [];
 
-
-		const connectionSettings = this.getNodeParameter('connectionSettings',   0) as { endpoint: string, username: string, password: string };
+		const connectionSettings: ConnectionSettings = this.getNodeParameter('connectionSettings',   0) as { endpoint: string, username: string, password: string };
 		const operation = this.getNodeParameter('operation',   0) as string;
 		const streamName = this.getNodeParameter('streamName',   0) as string;
 		const eventType = this.getNodeParameter('eventType',   0) as string;
 		const eventData = this.getNodeParameter('eventData',   0) as Record<string, unknown>;
 		const version = this.getNodeParameter('version',   0) as number;
-		const projectionName = this.getNodeParameter('projectionName',   0) as string;
 
+		const options = createConnectionOptions(connectionSettings);
 
-		const client = new EventStoreDBClient({
-			endpoint: connectionSettings.endpoint,
-			credentials: {
-				username: connectionSettings.username,
-				password: connectionSettings.password,
-			},
-		});
+		const client = new EventStoreDBClient(options);
 
 		if (operation === 'read') {
 			const events = client.readStream<JSONEventType>(streamName, {
