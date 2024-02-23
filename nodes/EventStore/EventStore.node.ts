@@ -7,7 +7,7 @@ import {
 import { EventStoreDBClient, SingleNodeOptions, jsonEvent, START, FORWARDS, JSONEventType, Credentials, ChannelCredentialOptions } from '@eventstore/db-client';
 import { v4 } from 'uuid';
 
-export class EventStoreNode implements INodeType {
+export class EventStore implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: 'EventStore Node',
 		name: 'eventStoreNode',
