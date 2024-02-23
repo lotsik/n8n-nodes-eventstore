@@ -4,7 +4,9 @@ import {
 	INodeType,
 	INodeTypeDescription,
 } from 'n8n-workflow';
-import { EventStoreDBClient, SingleNodeOptions, jsonEvent, START, FORWARDS, JSONEventType } from '@eventstore/db-client';
+import { EventStoreDBClient, SingleNodeOptions, jsonEvent, START, FORWARDS, JSONEventType, Credentials, ChannelCredentialOptions } from '@eventstore/db-client';
+import { v4 } from 'uuid';
+
 
 export class EventStoreNode implements INodeType {
 	description: INodeTypeDescription = {
@@ -39,12 +41,20 @@ export class EventStoreNode implements INodeType {
 						name: 'connectionSettings',
 						values: [
 							{
-								displayName: 'Endpoint',
-								name: 'endpoint',
+								displayName: 'Host',
+								name: 'host',
 								type: 'string',
-								default: 'esdb://localhost:2113',
-								placeholder: 'Endpoint',
-								description: 'The endpoint of the EventStoreDB instance.',
+								default: 'localhost',
+								placeholder: 'Host',
+								description: 'The host of the EventStoreDB instance.',
+							},
+							{
+								displayName: 'Port',
+								name: 'port',
+								type: 'string',
+								default: '2113',
+								placeholder: 'Port',
+								description: 'The port of the EventStoreDB instance.',
 							},
 							{
 								displayName: 'Username',
@@ -165,7 +175,8 @@ export class EventStoreNode implements INodeType {
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 
 		interface ConnectionSettings {
-			endpoint: string;
+			host: string;
+			port: number;
 			username: string;
 			password: string;
 		}
@@ -173,28 +184,39 @@ export class EventStoreNode implements INodeType {
 		function createConnectionOptions(settings: ConnectionSettings): SingleNodeOptions {
 			return {
 				endpoint: {
-					address: settings.endpoint,
-					port: 1113 // используем порт по умолчанию
-				},
-				credentials: {
-					username: settings.username,
-					password: settings.password
+					address: settings.host,
+					port: settings.port
 				}
+			};
+		}
+
+		function createChannelCredentialOptions(): ChannelCredentialOptions {
+			return {
+				insecure: true,
+			};
+		}
+
+		function createCredentials(settings: ConnectionSettings): Credentials {
+			return {
+				username: settings.username,
+				password: settings.password
 			};
 		}
 
 		const returnData: INodeExecutionData[] = [];
 
-		const connectionSettings: ConnectionSettings = this.getNodeParameter('connectionSettings',   0) as { endpoint: string, username: string, password: string };
+		const connectionSettings: ConnectionSettings = this.getNodeParameter('connectionSettings',   0) as { host: string, port: number, username: string, password: string };
 		const operation = this.getNodeParameter('operation',   0) as string;
 		const streamName = this.getNodeParameter('streamName',   0) as string;
 		const eventType = this.getNodeParameter('eventType',   0) as string;
 		const eventData = this.getNodeParameter('eventData',   0) as Record<string, unknown>;
 		const version = this.getNodeParameter('version',   0) as number;
 
-		const options = createConnectionOptions(connectionSettings);
+		const connectionsOptions = createConnectionOptions(connectionSettings);
+		const channelCredentialOptions = createChannelCredentialOptions();
+		const credentials = createCredentials(connectionSettings);
 
-		const client = new EventStoreDBClient(options);
+		const client = new EventStoreDBClient(connectionsOptions, channelCredentialOptions, credentials);
 
 		if (operation === 'read') {
 			const events = client.readStream<JSONEventType>(streamName, {
@@ -208,6 +230,7 @@ export class EventStoreNode implements INodeType {
 			}
 		} else if (operation === 'write') {
 			const event = jsonEvent({
+				id: v4(),
 				type: eventType,
 				data: eventData,
 			});
