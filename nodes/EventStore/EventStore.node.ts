@@ -173,38 +173,16 @@ export class EventStore implements INodeType {
 
 	async execute(this: IExecuteFunctions): Promise<INodeExecutionData[][]> {
 
-		interface ConnectionSettings {
-			host: string;
-			port: number;
-			username: string;
-			password: string;
-		}
+		const connectionOptions = await this.getCredentials('eventStore');
+		const credentials = {
+			username: connectionOptions.user as string,
+			password: connectionOptions.password as string,
+		};
 
-		function createConnectionOptions(settings: ConnectionSettings): SingleNodeOptions {
-			return {
-				endpoint: {
-					address: settings.host,
-					port: settings.port
-				}
-			};
-		}
-
-		function createChannelCredentialOptions(): ChannelCredentialOptions {
-			return {
-				insecure: true,
-			};
-		}
-
-		function createCredentials(settings: ConnectionSettings): Credentials {
-			return {
-				username: settings.username,
-				password: settings.password
-			};
-		}
+		const client = EventStoreDBClient.connectionString`esdb+discover://${connectionOptions.host as string}:${connectionOptions.port as number}?tls=false&keepAliveTimeout=10000&keepAliveInterval=10000`;
 
 		const returnData: INodeExecutionData[] = [];
 
-		const connectionSettings: ConnectionSettings = this.getNodeParameter('connectionSettings',   0) as { host: string, port: number, username: string, password: string };
 		const operation = this.getNodeParameter('operation',   0) as string;
 		const streamName = this.getNodeParameter('streamName',   0) as string;
 		const eventType = this.getNodeParameter('eventType',   0) as string;
